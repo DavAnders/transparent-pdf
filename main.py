@@ -1,5 +1,6 @@
 import fitz
 import tkinter as tk
+from tkinter import filedialog, simpledialog
 from PIL import Image, ImageTk
 
 def render_pdf_page(pdf_path, page_num):
@@ -32,6 +33,11 @@ class TransparentPDF(tk.Tk):
         self.slider_window.geometry("200x50+100+50")  # Positioning it near the main window
         self.slider_window.attributes("-topmost", True)
         self.slider_window.wm_transient(self)
+
+        # Force the slider window to be on top, might be temporary
+        self.slider_window.lift()
+        self.slider_window.attributes("-topmost", True)
+        self.slider_window.after(10, lambda: self.slider_window.lift())
         
         self.slider = tk.Scale(self.slider_window, from_=0.1, to=1.0, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_alpha)
         self.slider.set(self.alpha)
@@ -42,12 +48,27 @@ class TransparentPDF(tk.Tk):
         self.attributes("-alpha", self.alpha)
 
 def main():
-    print("Enter the path to the PDF file:")
-    pdf_path = input().strip()
-    print("Enter the page number:")
-    page_num = int(input().strip()) - 1
+    root = tk.Tk()
+    root.withdraw()  # Hiding the root window
 
-    app = TransparentPDF(pdf_path, page_num)
+    pdf_path = filedialog.askopenfilename(
+        title="Select PDF file",
+        filetypes=[("PDF files", "*.pdf")]
+    )
+
+    if not pdf_path:
+        print("No file selected. Exiting.")
+        return
+    
+    page_num = simpledialog.askinteger("Page Number", "Enter the page number:", minvalue=1)
+
+    if page_num is None:
+        print("No page number provided. Exiting.")
+        return
+    
+    root.destroy()  # Close hidden root window -- Behavior needs changing to fix slider attach to main
+
+    app = TransparentPDF(pdf_path, page_num - 1)
     app.mainloop()
 
 
